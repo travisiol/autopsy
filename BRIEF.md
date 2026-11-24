@@ -36,7 +36,8 @@ Tous les traders memecoin Solana : chacun en profite dès la première minute, s
 - Moteur anti-rug de Vigil (causes de mort).
 - Instructions SPL Token `burn` + `closeAccount` (transactions préparées par le serveur, signées par le joueur ; le SOL revient directement dans son wallet).
 - La commission est un transfert dans la même transaction.
-- Next.js sur Vercel, Upstash.
+- Next.js sur Vercel (`app/`, la page vient de `site/` au build). Pas de base de données : le serveur ne garde rien.
+- Construit le 24 nov. : `/api/autopsy` (comptes SPL + Token-2022, fiches Jupiter Tokens v2, noms Helius DAS), `/api/bury` (transactions simulées avant signature), `/api/send` (rediffusion jusqu'à confirmation). Classement : morts (jamais migré, saigné, rug, mort-né), comptes vides, **miettes** de tokens vivants (liquidité ≥ 50 k$ : à part, non cochées), vivants ≥ 0,10 $ jamais touchés ; NFT, wSOL, comptes gelés écartés.
 
 ## Monétisation
 - **Commission : 5 % fixes pour tout le monde**, sur le SOL récupéré uniquement (décidé le 24 nov. `[F-142]`). Pas d'exemption holders.

@@ -260,7 +260,7 @@ function fillReport(animate, keepShare) {
   tots[2].textContent = `${sol(s.lam)} SOL`;
   tots[3].textContent = `−${sol(s.fee)} SOL`;
   $('#rcSol').textContent = `${sol(s.lam - s.fee, 2)} SOL`;
-  r.querySelector('p').textContent = rep.alive.count ? `One flat 5% fee. ${rep.alive.count} live token${rep.alive.count > 1 ? 's' : ''} left untouched.` : 'One flat 5% fee. Same for everyone.';
+  r.querySelector('p').textContent = rep.alive.count ? `5% fee, only on the SOL you get back. ${rep.alive.count} live token${rep.alive.count > 1 ? 's' : ''} left untouched.` : '5% fee, only on the SOL you get back.';
   r.querySelector('.btn').textContent = n ? 'Bury them' : 'Nothing to bury';
   if (!keepShare) share(false, n, s.lam - s.fee, s);
   if (animate && window.gsap) {

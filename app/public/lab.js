@@ -199,7 +199,7 @@ async function connect(w) {
     if (!acc) throw new Error('no account');
     wallet = w; account = acc;
   } catch { msg = 'Connection cancelled.'; render(); return; }
-  document.querySelectorAll('header [data-connect]').forEach((b) => (b.textContent = short(account.address)));
+  document.querySelectorAll('header [data-connect], .nav [data-connect]').forEach((b) => (b.textContent = short(account.address)));
   const then = afterConnect; afterConnect = null;
   back.classList.remove('on'); mode = null;
   if (then) then(); else run(account.address);
@@ -234,13 +234,14 @@ function stats() {
 
 function fillReport(animate, keepShare) {
   const s = stats(), n = rep.bodies.length, top = s.order[0];
-  $('#report .sec-h p').textContent = `Case opened ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}. Every dead token in ${short(rep.wallet)}, tagged.`;
+  const intro = $('#report .sec-h p');
+  if (intro) intro.textContent = `Case opened ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}. Every dead token in ${short(rep.wallet)}, tagged.`;
   $('.pp-head span').textContent = `CASE #${caseNo()} · ${n ? 'OPEN' : 'CLEAN'}`;
   const f = document.querySelectorAll('.pp-fields b');
   f[0].textContent = short(rep.wallet);
   f[2].textContent = isFinite(s.since) ? `since ${month(s.since)}` : 'unknown';
   $('#ppCount').textContent = n;
-  $('.causes').innerHTML = s.order.slice(0, 5).map(([c, k], i) => {
+  $('#report ol').innerHTML = s.order.slice(0, 5).map(([c, k], i) => {
     let note = '';
     if (i === 0 && n >= 10) note = k / n > 0.4 ? 'most of them' : 'top killer';
     else if (c === 'RUGGED') note = 'ouch.';
@@ -261,21 +262,21 @@ function fillReport(animate, keepShare) {
   tots[3].textContent = `−${sol(s.fee)} SOL`;
   $('#rcSol').textContent = `${sol(s.lam - s.fee, 2)} SOL`;
   r.querySelector('p').textContent = rep.alive.count ? `5% fee, only on the SOL you get back. ${rep.alive.count} live token${rep.alive.count > 1 ? 's' : ''} left untouched.` : '5% fee, only on the SOL you get back.';
-  r.querySelector('.btn').textContent = n ? 'Bury them' : 'Nothing to bury';
+  (r.querySelector('.btn') || $('.bury-btn')).textContent = n ? 'Bury them' : 'Nothing to bury';
   if (!keepShare) share(false, n, s.lam - s.fee, s);
   if (animate && window.gsap) {
     // l'animation d'exemple de la maquette est terminée d'un coup : le vrai rapport a la sienne
     const tl = window.__lab.reportTl;
     if (tl) { if (tl.scrollTrigger) tl.scrollTrigger.kill(); tl.progress(1).kill(); window.__lab.reportTl = null; }
     gsap.set('#countRing, #woundRing', { strokeDashoffset: 0 });
-    gsap.fromTo('.paper .tw-line', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.4, ease: 'steps(16)', stagger: 0.07, delay: 0.9 });
+    gsap.fromTo('.paper .tw-line, .sheet ol li', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.4, ease: 'steps(16)', stagger: 0.07, delay: 0.9 });
     gsap.fromTo('#ppCount', { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(3)', delay: 1.1 });
     gsap.fromTo('#stamp', { scale: 2.2, opacity: 0, rotate: -20 }, { scale: 1, opacity: 0.92, rotate: -9, duration: 0.35, ease: 'power4.in', delay: 2 });
   }
 }
 
 // le bouton du reçu ouvre le tiroir de la morgue (on passe avant le défilement de la maquette)
-$('#receipt .btn').addEventListener('click', (e) => {
+($('#receipt .btn') || $('.bury-btn')).addEventListener('click', (e) => {
   if (!rep) return;
   e.preventDefault(); e.stopImmediatePropagation();
   if (rep.bodies.length) openSheet('morgue');
@@ -328,6 +329,14 @@ async function bury() {
 }
 
 function setFlask(frac, lamports) {
+  if (!$('#bigLevel')) {
+    // page v2 : la fiole d'or en plein écran
+    $('.bury').classList.add('is-live');
+    const k = Math.max(0, Math.min(1, frac));
+    if (window.gsap) gsap.to('.goldpot .lvl-live', { clipPath: `inset(${100 - 100 * k}% 0 0 0)`, duration: 1.2, ease: 'power2.out' });
+    $('#buryLive').textContent = sol(lamports, 3);
+    return;
+  }
   const pcs = document.querySelectorAll('.pc');
   const y = 330 - 140 * Math.min(1, frac);
   if (window.gsap) gsap.to('#bigLevel', { attr: { transform: `translate(0,${y})` }, duration: 1.2, ease: 'power2.out' });
@@ -376,12 +385,13 @@ async function live(built, signed) {
 
 // ---------- la carte à partager
 function share(done, n, lamports, s) {
-  const big = document.querySelector('.sc-big');
-  big.innerHTML = done ? `Buried <span class="glow">${n}</span> rugs.<br>Got <span class="gold">${sol(lamports, 2)} SOL</span> back.` : `Found <span class="glow">${n}</span> bodies.<br><span class="gold">${sol(lamports, 2)} SOL</span> to dig up.`;
-  const row = document.querySelectorAll('.sc-row > div');
+  const big = document.querySelector('.sc-big') || document.querySelector('.scard .big');
+  big.innerHTML = done ? `Buried <span class="glow">${n}</span> bodies.<br>Got <span class="gold">${sol(lamports, 2)} SOL</span> back.` : `Found <span class="glow">${n}</span> bodies.<br><span class="gold">${sol(lamports, 2)} SOL</span> to dig up.`;
+  const row = document.querySelectorAll('.sc-row > div').length ? document.querySelectorAll('.sc-row > div') : document.querySelectorAll('.scard .row > div');
   row[0].innerHTML = `Trader type<b>${esc(s.type)}</b>`;
   row[1].innerHTML = `Oldest body<b>${esc(s.oldest ? tick(s.oldest) : '—')}</b>`;
-  document.querySelector('.sticker .foot span').textContent = `AUTOPSY LAB · CASE #${String(n).padStart(4, '0')}`;
+  const foot = document.querySelector('.sticker .foot span');
+  if (foot) foot.textContent = `AUTOPSY LAB · CASE #${String(n).padStart(4, '0')}`;
   const text = done
     ? `I just buried ${n} dead memecoins and got ${sol(lamports, 3)} SOL back.\nTrader type: ${s.type}.\nAutopsy your wallet:`
     : `My wallet autopsy: ${n} dead memecoins, ${sol(lamports, 3)} SOL stuck in their graves.\nTrader type: ${s.type}.\nAutopsy yours:`;
@@ -389,7 +399,7 @@ function share(done, n, lamports, s) {
   if (!a) {
     a = document.createElement('a'); a.id = 'xShare'; a.className = 'btn btn-g'; a.target = '_blank'; a.rel = 'noopener';
     a.textContent = 'Post it on X';
-    document.querySelector('.share > div:last-child').appendChild(a);
+    (document.querySelector('.share .wrap > div:last-child') || document.querySelector('.share > div:last-child')).appendChild(a);
   }
   a.href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.origin)}`;
 }

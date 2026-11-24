@@ -381,7 +381,7 @@ function share(done, n, lamports, s) {
   const row = document.querySelectorAll('.sc-row > div');
   row[0].innerHTML = `Trader type<b>${esc(s.type)}</b>`;
   row[1].innerHTML = `Oldest body<b>${esc(s.oldest ? tick(s.oldest) : '—')}</b>`;
-  document.querySelector('.sticker .foot span').textContent = `AUTOPSY.FUN · CASE #${String(n).padStart(4, '0')}`;
+  document.querySelector('.sticker .foot span').textContent = `AUTOPSY LAB · CASE #${String(n).padStart(4, '0')}`;
   const text = done
     ? `I just buried ${n} dead memecoins and got ${sol(lamports, 3)} SOL back.\nTrader type: ${s.type}.\nAutopsy your wallet:`
     : `My wallet autopsy: ${n} dead memecoins, ${sol(lamports, 3)} SOL stuck in their graves.\nTrader type: ${s.type}.\nAutopsy yours:`;

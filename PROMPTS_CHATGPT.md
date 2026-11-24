@@ -60,6 +60,30 @@ Sections from top to bottom:
 DO NOT: no real memecoin characters or logos (no Shiba Inu, Pepe, Doge), no gore, no red, no lorem ipsum, no device mockup.
 ```
 
+## ÉTAPE 3 — LA BANNIÈRE X (1500x500) — « L'étagère des spécimens »
+> Joins **le logo** ([site/img/logo-512.webp](site/img/logo-512.webp)) et **la capture du site** ([design/ref-site-hero.jpg](design/ref-site-hero.jpg)) : la bannière doit avoir exactement le style du site en ligne.
+> ChatGPT ne sort pas du 1500x500 : on lui fait composer la bannière dans la bande du milieu d'une image 1536x1024, puis je la recadre et la redimensionne en 1500x500.
+> L'histoire se lit de gauche à droite : les morts étiquetés → le flacon plein de SOL.
+
+```
+Create an X (Twitter) header banner for "Autopsy" (autopsy.fun), a Solana web app that finds the dead memecoins in your wallet, names what killed each one, then burns them and gives you back the SOL locked in their accounts.
+Attached: the logo and a screenshot of the live website. Match the website's look exactly: a calm, dark laboratory, soft toxic green glow, clean polished 2D illustration with subtle glass shading. Not a 3D render, not photorealistic.
+
+CANVAS: 1536x1024. Compose the whole banner inside the middle horizontal band (from y 256 to y 768, a 3:1 strip). The top and bottom thirds are only plain continuing background, with nothing important in them: the image will be cropped to that band.
+
+BACKGROUND: very dark green-black #06100D, fine vertical hairlines in pale mint #A8E6A0 at about 8% opacity that fade out toward the edges, a large soft round glow of toxic green #79EC60 at about 25% behind the flasks, light film grain. Calm and empty, no clutter.
+
+RIGHT 60% OF THE BAND: a dark speckled resin lab shelf seen straight on, with a strip of beige masking tape on its front edge reading exactly "SHELF B · SPECIMENS" in a typewriter font. On the shelf, a row of five round-bottom glass flasks with short necks, slightly different sizes, glossy glass with one white highlight each.
+- Flasks 1 to 4 are filled with glowing toxic green liquid #79EC60. In each floats one "dead coin": a round coin in desaturated sage green #5E8A6A with a darker rim, two small X-shaped eyes and a small sad mouth, exactly like the coins in the attached website screenshot. Each of these flasks has a small cream paper toe tag #E8F0E1 tied to its neck with a short string, typed in a typewriter font (Courier Prime style) in dark ink #14261D, reading exactly, from left to right: "BUNDLED", "DEV DUMPED", "RUG", "NEVER BONDED".
+- Flask 5, on the far right and the biggest, is filled with warm glowing gold coins #F4C226 (plain coins, no logo), the brightest element of the banner. Its tag reads exactly "SOL BACK".
+
+LEFT 40% OF THE BAND: the headline on two lines, "Bring out" / "your dead.", in Unbounded ExtraBold (very bold rounded geometric sans), off-white #ECF7E8, tight letter spacing; the word "dead." in toxic green #79EC60 with a soft glow. Under it, small, in JetBrains Mono, pale mint #A8E6A0, widely letter-spaced: "AUTOPSY.FUN". Keep the headline in the upper two-thirds of the band: the bottom-left corner stays empty because the X profile picture covers it.
+
+DO NOT: no skulls, no blood, no people, no animals, no real memecoin characters or logos (no Shiba Inu, Pepe, Doge), no Solana logo, no red, no extra words, no watermark, no sparkles, no particles, no device frame. Spell every text exactly as written.
+```
+
+**Si une étiquette est mal écrite :** `Same image, fix only the tag texts: "BUNDLED", "DEV DUMPED", "RUG", "NEVER BONDED", "SOL BACK". Change nothing else.`
+
 ---
 
 # ARCHIVES — l'image clé (étape terminée)

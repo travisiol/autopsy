@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autopsy · Find out what killed your bags</title>
+<meta name="description" content="Paste any Solana wallet. Autopsy names the cause of death of every dead memecoin in it, then buries them and gives you back the SOL they were sitting on.">
+<meta name="theme-color" content="#06100D">
+<link rel="icon" href="img/favicon-64.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Autopsy v2 · « The Lab » repensé façon ASLAB (Behance) : verre cannelé, liquide, lignes striées `[F-137]`
+   Fond : shader WebGL « Fluted Glass · Waves » de 21st.dev (Paper Shaders, Apache-2.0), recoloré. Aucune image générée. */
+:root{
+  --bg:#06100D; --bg2:#0A1814; --slate:#10241F; --line:rgba(168,230,160,.14); --line2:rgba(168,230,160,.28);
+  --g:#79EC60; --g2:#38B453; --mint:#A8E6A0; --pale:#D6F5CB; --gold:#F4C226;
+  --tx:#ECF7E8; --mut:#8BA596;
+  --disp:'Unbounded',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--tx);font:400 17px/1.6 Inter,system-ui,sans-serif;background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit}
+.wrap{width:min(1240px,calc(100% - 48px));margin:0 auto}
+.disp{font-family:var(--disp);font-weight:800;letter-spacing:-.035em;line-height:.95}
+.mono{font-family:var(--mono)}
+.glow{color:var(--g);text-shadow:0 0 24px rgba(121,236,96,.45)}
+.gold{color:var(--gold);text-shadow:0 0 20px rgba(244,194,38,.35)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font:700 11px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--mint)}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--mint)}
+.striae{background-image:repeating-linear-gradient(90deg,rgba(168,230,160,.12) 0 1px,transparent 1px 7px)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 24px;border:0;border-radius:999px;font:700 14px/1 var(--disp);letter-spacing:.01em;text-decoration:none;cursor:pointer;transition:transform .2s,box-shadow .3s,background .3s;white-space:nowrap}
+.btn-g{background:var(--g);color:#052009;box-shadow:0 10px 34px rgba(121,236,96,.3)}
+.btn-g:hover{transform:translateY(-2px);box-shadow:0 14px 48px rgba(121,236,96,.5)}
+.btn-g svg{width:16px;height:16px}
+.btn-sm{height:42px;padding:0 18px;font-size:12px}
+
+header{position:fixed;inset:16px 24px auto;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:8px 8px 8px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(6,16,13,.55);backdrop-filter:blur(18px) saturate(1.4)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo img{width:34px;height:34px;border-radius:10px}
+.logo b{font:700 18px/1 var(--disp);letter-spacing:-.02em}
+header nav{display:flex;gap:28px}
+header nav a{font:500 14px Inter;color:var(--mut);text-decoration:none;transition:color .2s}
+header nav a:hover{color:var(--tx)}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.ca{display:flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:1px solid var(--line);border-radius:999px;font:500 12px var(--mono);color:var(--mut)}
+.ca i{width:6px;height:6px;border-radius:50%;background:var(--g);box-shadow:0 0 10px var(--g)}
+
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;isolation:isolate}
+#glass{position:absolute;inset:0;z-index:-2;width:100%;height:100%;display:block}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(6,16,13,.92) 0%,rgba(6,16,13,.72) 38%,rgba(6,16,13,.15) 70%,rgba(6,16,13,.05) 100%),linear-gradient(180deg,rgba(6,16,13,.25),transparent 30%,transparent 70%,var(--bg) 100%)}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center;padding:140px 0 100px}
+.hero h1{margin:22px 0 22px;font-size:clamp(44px,5.4vw,84px)}
+.hero h1 .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.06em}
+.hero h1 .w>span{display:inline-block}
+.lead{margin:0 0 32px;max-width:520px;font-size:19px;color:#C5D8CC}
+.probe{display:flex;gap:8px;padding:7px;border:1px solid var(--line2);border-radius:999px;background:rgba(6,16,13,.6);backdrop-filter:blur(16px);max-width:560px;transition:border-color .3s,box-shadow .3s}
+.probe:focus-within{border-color:var(--g);box-shadow:0 0 0 6px rgba(121,236,96,.1)}
+.probe input{flex:1;min-width:0;height:48px;padding:0 18px;border:0;background:transparent;color:var(--tx);font:500 14px var(--mono);outline:none}
+.probe input::placeholder{color:#5d776a}
+.probe .btn{height:48px}
+.probe-sub{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:14px;color:var(--mut)}
+.probe-sub button{padding:0;border:0;background:none;color:var(--g);font:600 14px Inter;cursor:pointer}
+.probe-msg{min-height:22px;margin-top:10px;font:500 13px var(--mono);color:var(--mint)}
+
+.live{position:relative;border:1px solid var(--line2);border-radius:28px;background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02) 40%,rgba(6,16,13,.35));backdrop-filter:blur(22px) saturate(1.3);box-shadow:0 40px 100px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12);padding:22px 22px 20px;overflow:hidden}
+.live-h{display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.live-h b{font:700 15px var(--disp)}
+.live-h span{font:500 11px var(--mono);color:var(--mut)}
+.pill{padding:5px 9px;border-radius:999px;border:1px solid var(--line2);font:700 10px var(--mono);letter-spacing:.12em;color:var(--mint)}
+.rows{list-style:none;margin:12px 0 0;padding:0;min-height:262px}
+.row{display:grid;grid-template-columns:34px 1fr auto auto;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px dashed var(--line);opacity:0;transform:translateY(10px)}
+.row .m{font:500 13px var(--mono);color:#cfe3d5}
+.row .l{font:500 12px var(--mono);color:var(--mut)}
+.cause{padding:6px 10px;border-radius:8px;background:rgba(121,236,96,.1);border:1px solid rgba(121,236,96,.3);font:700 10px var(--mono);letter-spacing:.12em;color:var(--g);text-transform:uppercase}
+.live-f{display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px;padding:16px;border-radius:18px;background:rgba(244,194,38,.07);border:1px solid rgba(244,194,38,.25)}
+.live-f span{font:700 11px var(--mono);letter-spacing:.16em;color:var(--mut);text-transform:uppercase}
+.live-f b{font:800 32px/1 var(--disp);letter-spacing:-.03em}
+
+.ticker{position:relative;overflow:hidden;border-block:1px solid var(--line);padding:22px 0;background:var(--bg2)}
+.ticker .track{display:flex;width:max-content;gap:56px;animation:tick 38s linear infinite}
+.ticker span{display:flex;align-items:center;gap:56px;font:700 clamp(22px,2.6vw,36px)/1 var(--disp);letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1px rgba(168,230,160,.5);white-space:nowrap}
+.ticker span em{font-style:normal;color:var(--g);-webkit-text-stroke:0}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+section{position:relative}
+.sec{padding:150px 0}
+.sec-h{max-width:960px;margin-bottom:64px}
+.sec-h h2{margin:18px 0 18px;font-size:clamp(38px,4.6vw,68px)}
+.sec-h p{margin:0;max-width:640px;color:var(--mut);font-size:18px}
+
+.how{height:320vh}
+.how-pin{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden}
+.how-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:64px;align-items:center}
+.steps{list-style:none;margin:36px 0 0;padding:0;display:grid;gap:12px}
+.step{position:relative;padding:20px 22px 20px 66px;border-radius:20px;border:1px solid var(--line);background:rgba(16,36,31,.35);opacity:.38;transition:opacity .45s,border-color .45s,background .45s}
+.step.on{opacity:1;border-color:var(--line2);background:rgba(16,36,31,.8)}
+.step em{position:absolute;left:20px;top:22px;font:700 13px var(--mono);font-style:normal;color:var(--g)}
+.step b{display:block;font:700 20px/1.2 var(--disp);letter-spacing:-.02em}
+.step span{display:block;margin-top:6px;font-size:15px;color:var(--mut)}
+.bench{position:relative;padding:30px 28px 26px;border-radius:32px;border:1px solid var(--line);background:radial-gradient(70% 60% at 50% 110%,rgba(121,236,96,.14),transparent 70%),linear-gradient(180deg,var(--bg2),#081310)}
+.bench>.striae{position:absolute;inset:0;border-radius:inherit;opacity:.5;-webkit-mask-image:linear-gradient(180deg,#000,transparent 60%);mask-image:linear-gradient(180deg,#000,transparent 60%)}
+.tubes{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.tube{position:relative;text-align:center}
+.tube svg{width:100%;height:auto;overflow:visible}
+.tube .coinx{transform-box:fill-box;transform-origin:center;animation:bob 3.4s ease-in-out infinite}
+.tube:nth-child(2) .coinx{animation-delay:-.8s}.tube:nth-child(3) .coinx{animation-delay:-1.6s}.tube:nth-child(4) .coinx{animation-delay:-2.4s}
+@keyframes bob{50%{transform:translateY(-7px) rotate(6deg)}}
+.tube .bub{animation:rise 3s linear infinite;opacity:0}
+.tube .bub:nth-of-type(2){animation-delay:-1s}.tube .bub:nth-of-type(3){animation-delay:-2s}
+@keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:.8}100%{transform:translateY(-150px);opacity:0}}
+.ttag{display:inline-block;margin-top:12px;padding:7px 10px;border-radius:8px;background:var(--pale);color:#0B2A14;font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;opacity:0;transform:translateY(-8px) rotate(-3deg) scale(.7)}
+.machine{display:flex;align-items:center;gap:20px;margin-top:26px;padding:16px 20px;border-radius:22px;border:1px solid var(--line);background:rgba(6,16,13,.65)}
+.machine svg{width:74px;height:74px;flex:none}
+.k{font:700 11px var(--mono);letter-spacing:.18em;color:var(--mut);text-transform:uppercase}
+.machine .v{font:800 46px/1 var(--disp);letter-spacing:-.04em}
+.fly{position:absolute;left:0;top:0;z-index:5;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE58A,var(--gold) 55%,#B98A12);box-shadow:0 0 16px rgba(244,194,38,.7);opacity:0;pointer-events:none}
+
+.report{display:grid;grid-template-columns:1.25fr .75fr;gap:20px}
+.card{position:relative;border:1px solid var(--line);border-radius:28px;background:linear-gradient(180deg,rgba(16,36,31,.7),rgba(8,19,16,.9));padding:32px;overflow:hidden}
+.rep-h{display:flex;justify-content:space-between;gap:16px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.rep-h h3{margin:0;font:700 22px var(--disp);letter-spacing:-.02em}
+.rep-h .s{margin-top:8px;font:500 12px var(--mono);color:var(--mut)}
+.ex{margin-left:8px;vertical-align:middle}
+.bodies{text-align:right}
+.bodies b{display:block;font:800 64px/.9 var(--disp);letter-spacing:-.05em}
+.bodies span{font:700 11px var(--mono);letter-spacing:.16em;color:var(--mut)}
+.bars{list-style:none;margin:24px 0 0;padding:0;display:grid;gap:14px}
+.bars li{display:grid;grid-template-columns:120px 1fr 44px;align-items:center;gap:16px;font:700 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#cfe3d5}
+.bars .t{height:10px;border-radius:99px;background:rgba(168,230,160,.08);overflow:hidden}
+.bars .t i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--g2),var(--g));transition:width 1.3s cubic-bezier(.2,.9,.2,1)}
+.bars .n{text-align:right;font-size:14px;color:var(--tx)}
+.side{display:grid;gap:20px}
+.big{display:block;margin:14px 0 10px;font:800 34px/1 var(--disp);letter-spacing:-.03em}
+.side p{margin:0;font-size:15px;color:var(--mut)}
+.rec{border-color:rgba(244,194,38,.35);background:radial-gradient(90% 120% at 100% 0,rgba(244,194,38,.14),transparent 60%),linear-gradient(180deg,rgba(26,28,14,.85),rgba(10,12,8,.95))}
+.rec .big{font-size:56px}
+.rec .btn{width:100%;margin-top:10px}
+
+.bury-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.rig{position:relative;display:grid;place-items:center;padding:40px 30px 30px;border-radius:32px;border:1px solid var(--line);background:radial-gradient(60% 55% at 50% 45%,rgba(121,236,96,.13),transparent 70%),var(--bg2);overflow:hidden}
+.rig>.striae{position:absolute;inset:0;opacity:.35}
+.rig>svg{position:relative;width:min(380px,90%)}
+.points{list-style:none;margin:30px 0 0;padding:0;display:grid;gap:16px}
+.points li{display:grid;grid-template-columns:26px 1fr;gap:12px;color:#C5D8CC}
+.points li svg{width:20px;height:20px;margin-top:3px}
+
+.share{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+.sharecard{position:relative;aspect-ratio:1200/630;border-radius:24px;overflow:hidden;border:1px solid var(--line2);box-shadow:0 40px 100px rgba(0,0,0,.55)}
+.sharecard canvas{position:absolute;inset:0;width:100%;height:100%}
+.sharecard::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,16,13,.92),rgba(6,16,13,.55) 60%,rgba(6,16,13,.15))}
+.sc-in{position:absolute;inset:0;z-index:1;padding:6% 6.5%;display:flex;flex-direction:column;justify-content:space-between}
+.sc-top{display:flex;align-items:center;gap:10px;font:700 clamp(12px,1.5vw,18px) var(--disp)}
+.sc-top img{width:clamp(22px,2.6vw,34px);border-radius:8px}
+.sc-big{font:800 clamp(26px,3.8vw,52px)/1 var(--disp);letter-spacing:-.04em}
+.sc-row{display:flex;gap:clamp(16px,3vw,44px);font:700 clamp(9px,1vw,12px) var(--mono);letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.sc-row b{display:block;margin-top:6px;font:700 clamp(14px,1.8vw,22px) var(--disp);letter-spacing:-.02em;color:var(--tx);text-transform:none}
+
+.tok{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tok .card h3{margin:22px 0 10px;font:700 20px/1.2 var(--disp);letter-spacing:-.02em}
+.tok .card p{margin:0;color:var(--mut);font-size:15px}
+.ico{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;border:1px solid var(--line2);background:rgba(121,236,96,.06)}
+.ico svg{width:24px;height:24px}
+.ca-big{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:18px;padding:20px 24px;border:1px dashed var(--line2);border-radius:20px;font:500 13px var(--mono);color:var(--mut)}
+
+.final{position:relative;padding:170px 0 140px;text-align:center;overflow:hidden;isolation:isolate}
+#glass2{position:absolute;inset:0;z-index:-2;width:100%;height:100%;opacity:.55}
+.final::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(60% 70% at 50% 50%,rgba(6,16,13,.3),var(--bg) 85%)}
+.final h2{margin:20px 0 30px;font-size:clamp(46px,7.6vw,116px)}
+.final .probe{margin:0 auto}
+footer{border-top:1px solid var(--line);padding:30px 0 40px}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;font-size:14px;color:var(--mut)}
+footer nav{display:flex;gap:22px}
+footer a{text-decoration:none}
+footer a:hover{color:var(--g)}
+
+.rv{opacity:0;transform:translateY(30px)}
+
+@media (max-width:1020px){
+  header nav,.ca{display:none}
+  .hero .wrap{grid-template-columns:1fr;gap:40px}
+  .how{height:auto}
+  .how-pin{position:relative;height:auto;padding:120px 0}
+  .how-grid,.report,.bury-grid,.share,.tok,.hero .wrap{grid-template-columns:minmax(0,1fr)}
+  .step{opacity:1}
+  .ttag{opacity:1;transform:rotate(-3deg)}
+}
+@media (max-width:600px){
+  header{inset:10px 10px auto}
+  .hero::after{background:linear-gradient(180deg,rgba(6,16,13,.55),rgba(6,16,13,.85) 50%,var(--bg))}
+  .hero .wrap{padding:120px 0 80px}
+  .probe{flex-direction:column;border-radius:24px}
+  .probe .btn{width:100%}
+  .tubes{grid-template-columns:repeat(2,1fr)}
+  .row{grid-template-columns:30px 1fr auto}
+  .row .l{display:none}
+  .bars li{grid-template-columns:96px 1fr 36px}
+  .sec{padding:110px 0}
+  .card{padding:24px}
+  .bodies b{font-size:48px}
+}
+@media (prefers-reduced-motion:reduce){.rv,.row{opacity:1;transform:none}*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="deadCoin" cx="35%" cy="30%"><stop offset="0" stop-color="#C9F0BE"/><stop offset=".6" stop-color="#6FA582"/><stop offset="1" stop-color="#2E5A44"/></radialGradient>
+    <radialGradient id="goldCoin" cx="35%" cy="30%"><stop offset="0" stop-color="#FFE58A"/><stop offset=".55" stop-color="#F4C226"/><stop offset="1" stop-color="#B98A12"/></radialGradient>
+    <linearGradient id="liquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BFF7E"/><stop offset=".25" stop-color="#79EC60"/><stop offset="1" stop-color="#1E7A35"/></linearGradient>
+    <linearGradient id="glassG" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".3" stop-color="#fff" stop-opacity=".02"/><stop offset=".8" stop-color="#fff" stop-opacity=".02"/><stop offset="1" stop-color="#fff" stop-opacity=".14"/></linearGradient>
+    <symbol id="coinx" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="url(#deadCoin)" stroke="#0B2A14" stroke-width="2.2"/><circle cx="20" cy="20" r="13" fill="none" stroke="#0B2A14" stroke-opacity=".35" stroke-width="1.5"/><path d="M12 14l5 5M17 14l-5 5M23 14l5 5M28 14l-5 5" stroke="#0B2A14" stroke-width="2.4" stroke-linecap="round"/><path d="M14 28q6-4 12 0" fill="none" stroke="#0B2A14" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header>
+  <a class="logo" href="#top" aria-label="Autopsy home"><img src="img/logo-512.webp" alt=""><b>autopsy</b></a>
+  <nav aria-label="Main"><a href="#how">How it works</a><a href="#report">The report</a><a href="#bury">Bury</a><a href="#token">$AUTOPSY</a></nav>
+  <div class="hdr-r">
+    <span class="ca"><i></i>$AUTOPSY · at launch</span>
+    <button class="btn btn-g btn-sm" type="button" data-connect>Connect wallet</button>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <canvas id="glass" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Solana · dead bag laboratory</span>
+      <h1 class="disp"><span class="w"><span>Your</span></span> <span class="w"><span>bags</span></span> <span class="w"><span>died.</span></span><br><span class="w"><span>Find</span></span> <span class="w"><span>out</span></span> <span class="w"><span>what</span></span> <span class="w"><span class="glow">killed</span></span> <span class="w"><span>them.</span></span></h1>
+      <p class="lead">Paste any wallet. Autopsy names the cause of death of every dead memecoin in it, then buries them and gives you back the SOL they were sitting on.</p>
+      <form class="probe" data-probe>
+        <input type="text" autocomplete="off" spellcheck="false" placeholder="Paste a Solana wallet address" aria-label="Solana wallet address">
+        <button class="btn btn-g" type="submit">Start the autopsy <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+      </form>
+      <div class="probe-sub"><button type="button" data-connect>or connect your wallet</button><span>Read-only. Nothing to sign to see the report.</span></div>
+      <div class="probe-msg" aria-live="polite"></div>
+    </div>
+    <div class="live" aria-label="Example of a live autopsy">
+      <div class="live-h"><div><b>Autopsy in progress</b><br><span>Subject 7xKX…9fQ2</span></div><span class="pill">EXAMPLE</span></div>
+      <ul class="rows" id="rows"></ul>
+      <div class="live-f"><div><span>Recoverable</span><br><b class="gold" id="liveSol">0.000 SOL</b></div><span id="liveN">0 bodies</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="ticker" aria-hidden="true">
+  <div class="track">
+    <span>Bundled <em>✕</em> Dev dumped <em>✕</em> Sniped <em>✕</em> Rug <em>✕</em> Starved <em>✕</em> Liquidity pulled <em>✕</em></span>
+    <span>Bundled <em>✕</em> Dev dumped <em>✕</em> Sniped <em>✕</em> Rug <em>✕</em> Starved <em>✕</em> Liquidity pulled <em>✕</em></span>
+  </div>
+</div>
+
+<section class="how" id="how">
+  <div class="how-pin">
+    <div class="wrap how-grid">
+      <div>
+        <span class="eyebrow">How it works</span>
+        <h2 class="disp" style="font-size:clamp(38px,4.4vw,64px);margin:18px 0 0">Three steps<br>on the <span class="glow">table.</span></h2>
+        <ol class="steps">
+          <li class="step"><em>01</em><b>Scan</b><span>Every token the wallet ever held: alive, dying or dead.</span></li>
+          <li class="step"><em>02</em><b>Autopsy</b><span>The cause of death of each one, read on-chain: bundled launch, dev dumped, sniped, rug, starved.</span></li>
+          <li class="step"><em>03</em><b>Bury</b><span>Dead tokens burned, their accounts closed, the SOL back in your wallet.</span></li>
+        </ol>
+      </div>
+      <div class="bench" id="bench">
+        <div class="striae"></div>
+        <div class="tubes" id="tubes"></div>
+        <div class="machine">
+          <svg viewBox="0 0 80 80" aria-hidden="true"><defs><clipPath id="fl1"><path d="M32 8h16v18c12 4 20 15 20 28a28 28 0 1 1-56 0c0-13 8-24 20-28z"/></clipPath></defs><g clip-path="url(#fl1)"><rect x="0" y="0" width="80" height="80" fill="rgba(121,236,96,.08)"/><rect id="miniLevel" x="0" y="80" width="80" height="80" fill="url(#liquid)"/></g><path d="M32 8h16v18c12 4 20 15 20 28a28 28 0 1 1-56 0c0-13 8-24 20-28z" fill="url(#glassG)" stroke="#A8E6A0" stroke-opacity=".7" stroke-width="2"/><rect x="29" y="4" width="22" height="6" rx="3" fill="#A8E6A0" fill-opacity=".8"/></svg>
+          <div><div class="k">SOL recovered</div><div class="v gold" id="howSol">0.000</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="report">
+  <div class="wrap">
+    <div class="sec-h rv">
+      <span class="eyebrow">The report</span>
+      <h2 class="disp">Every body <span class="glow">gets a tag.</span></h2>
+      <p>What you get after an autopsy. These numbers are an example; yours come from your own wallet.</p>
+    </div>
+    <div class="report">
+      <div class="card rv">
+        <div class="rep-h">
+          <div><h3>Autopsy report <span class="pill ex">EXAMPLE</span></h3><div class="s">Subject 7xKX…9fQ2 · 2 years of trading</div></div>
+          <div class="bodies"><b class="glow" data-count="214">0</b><span>BODIES</span></div>
+        </div>
+        <ul class="bars">
+          <li><span>Starved</span><span class="t"><i data-w="76"></i></span><span class="n">76</span></li>
+          <li><span>Bundled</span><span class="t"><i data-w="61"></i></span><span class="n">61</span></li>
+          <li><span>Dev dumped</span><span class="t"><i data-w="38"></i></span><span class="n">38</span></li>
+          <li><span>Sniped</span><span class="t"><i data-w="22"></i></span><span class="n">22</span></li>
+          <li><span>Rug</span><span class="t"><i data-w="17"></i></span><span class="n">17</span></li>
+        </ul>
+      </div>
+      <div class="side">
+        <div class="card rv"><span class="k">Trader type</span><span class="big" style="color:var(--pale)">Exit liquidity</span><p>Buys the top, holds the bottom, keeps the lights on for everyone else.</p></div>
+        <div class="card rv"><span class="k">Worst wound</span><span class="big">−2.4 SOL</span><p>Bought 3 minutes after launch. Bundled, dead 4 minutes later.</p></div>
+        <div class="card rec rv"><span class="k">Recoverable now</span><span class="big gold" data-count="0.43" data-dec="2" data-unit=" SOL">0.00 SOL</span><a class="btn btn-g" href="#bury">Bury them</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="bury" style="padding-top:40px">
+  <div class="wrap bury-grid">
+    <div class="rig rv">
+      <div class="striae"></div>
+      <svg viewBox="0 0 320 340" aria-hidden="true">
+        <defs><clipPath id="fl2"><path d="M128 40h64v66c46 16 76 58 76 106a108 108 0 1 1-216 0c0-48 30-90 76-106z"/></clipPath></defs>
+        <g clip-path="url(#fl2)">
+          <rect width="320" height="340" fill="rgba(121,236,96,.05)"/>
+          <g id="bigLevel" transform="translate(0,330)"><path d="M0 14 Q40 0 80 14 T160 14 T240 14 T320 14 V340 H0z" fill="url(#liquid)" opacity=".9"/></g>
+          <g id="pile"></g>
+        </g>
+        <path d="M128 40h64v66c46 16 76 58 76 106a108 108 0 1 1-216 0c0-48 30-90 76-106z" fill="url(#glassG)" stroke="#A8E6A0" stroke-opacity=".65" stroke-width="3"/>
+        <rect x="120" y="28" width="80" height="18" rx="9" fill="#A8E6A0" fill-opacity=".85"/>
+        <text x="160" y="150" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="40" fill="#ECF7E8" id="bigSol">0.00</text>
+        <text x="160" y="172" text-anchor="middle" font-family="JetBrains Mono" font-size="11" letter-spacing="3" fill="#ECF7E8" fill-opacity=".75">SOL RECOVERED</text>
+      </svg>
+    </div>
+    <div class="rv">
+      <span class="eyebrow">Bury them</span>
+      <h2 class="disp" style="font-size:clamp(38px,4.6vw,68px);margin:18px 0 20px">One click.<br><span class="gold">SOL back.</span></h2>
+      <p style="margin:0;color:var(--mut);font-size:18px">Every token you ever bought opened an account that holds a little SOL. When the token dies, the SOL stays stuck in there. Autopsy burns the dead tokens, closes their accounts, and the SOL flows back to you.</p>
+      <ul class="points">
+        <li><svg viewBox="0 0 20 20" fill="none" stroke="#79EC60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4 4 8-8"/></svg>You sign in your own wallet: 1 to 3 signatures, even for hundreds of bodies.</li>
+        <li><svg viewBox="0 0 20 20" fill="none" stroke="#79EC60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4 4 8-8"/></svg>The SOL goes straight to your wallet. Autopsy never holds your funds.</li>
+        <li><svg viewBox="0 0 20 20" fill="none" stroke="#79EC60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4 4 8-8"/></svg>A live gauge shows every account closing, and the flask filling up.</li>
+        <li><svg viewBox="0 0 20 20" fill="none" stroke="#79EC60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4 4 8-8"/></svg>A small fee on the SOL recovered. $AUTOPSY holders bury for free.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:40px">
+  <div class="wrap share">
+    <div class="sharecard rv" aria-label="Example share card">
+      <canvas id="glass3" aria-hidden="true"></canvas>
+      <div class="sc-in">
+        <div class="sc-top"><img src="img/logo-512.webp" alt="">autopsy.fun</div>
+        <div class="sc-big">Buried <span class="glow">214</span> rugs.<br>Got <span class="gold">0.43 SOL</span> back.</div>
+        <div class="sc-row"><div>Trader type<b>Exit liquidity</b></div><div>Worst wound<b>−2.4 SOL</b></div></div>
+      </div>
+    </div>
+    <div class="rv">
+      <span class="eyebrow">Share your autopsy</span>
+      <h2 class="disp" style="font-size:clamp(38px,4.4vw,64px);margin:18px 0 20px">Post your<br><span class="glow">graveyard.</span></h2>
+      <p style="margin:0;color:var(--mut);font-size:18px">Every autopsy ends with a card made for X: your body count, your SOL back, your trader type. Autopsy your friends' wallets too. Any address works.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="token" style="padding-top:40px">
+  <div class="wrap">
+    <div class="sec-h rv">
+      <span class="eyebrow">$AUTOPSY</span>
+      <h2 class="disp">The lab feeds <span class="glow">the token.</span></h2>
+    </div>
+    <div class="tok">
+      <div class="card rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#79EC60" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v5L5 18a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-10V3"/><path d="M7.5 14h9"/></svg></span><h3>Fees buy it back</h3><p>Part of every fee taken on recovered SOL buys $AUTOPSY on the open market, with a public log.</p></div>
+      <div class="card rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#F4C226" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M9 10h6M9 14h6"/></svg></span><h3>Holders bury free</h3><p>Hold the minimum and every burial is fee-free. All the SOL comes back to you.</p></div>
+      <div class="card rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#A8E6A0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c1-3 3-4 5-4s4 1 5 4M11 19c1-3 3-4 5-4s4 1 5 4"/></svg></span><h3>Referrals pay</h3><p>Send a friend their autopsy. When they bury, you get a share of the fee.</p></div>
+    </div>
+    <div class="ca-big rv"><span>Contract address</span><span>Published at launch, right here.</span></div>
+  </div>
+</section>
+
+<section class="final">
+  <canvas id="glass2" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <span class="eyebrow">The lab is open</span>
+    <h2 class="disp">Bring out<br><span class="glow">your dead.</span></h2>
+    <form class="probe" data-probe>
+      <input type="text" autocomplete="off" spellcheck="false" placeholder="Paste a Solana wallet address" aria-label="Solana wallet address">
+      <button class="btn btn-g" type="submit">Start the autopsy</button>
+    </form>
+    <div class="probe-msg" aria-live="polite"></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="logo" href="#top"><img src="img/logo-512.webp" alt=""><b>autopsy</b></a>
+    <span>Facts from the chain, not financial advice.</span>
+    <nav aria-label="Footer"><a href="#how">How it works</a><a href="https://x.com" rel="noopener">X</a><a href="#top">Terms</a></nav>
+  </div>
+</footer>
+
+<script>
+/* ===== Fond « verre cannelé + liquide » : shader WebGL de 21st.dev « Fluted Glass · Waves »
+   (21st.dev Shader Builder, adapté de Paper Shaders, Apache-2.0), porté en JS sans React et recoloré `[F-137]` */
+(() => {
+const VERT = 'attribute vec2 a_position;void main(){gl_Position=vec4(a_position,0.0,1.0);}';
+const FRAG = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec3 u_colors[8];uniform vec4 u_scene;uniform vec4 u_shape;uniform vec4 u_surface;uniform vec4 u_finish;uniform vec4 u_transform;uniform vec4 u_space;uniform vec4 u_cursor;
+#define u_resolution u_scene.xy
+#define u_time u_scene.z
+#define u_colorCount u_scene.w
+#define u_scale u_shape.x
+#define u_intensity u_shape.y
+#define u_paramA u_shape.z
+#define u_warp u_shape.w
+#define u_detail u_surface.x
+#define u_contrast u_surface.y
+#define u_brightness u_surface.z
+#define u_saturation u_surface.w
+#define u_vignette u_finish.y
+#define u_grain u_finish.w
+#define u_seed mod(u_transform.x,31.0)
+#define u_rotate u_transform.y
+#define u_drift u_transform.z
+#define u_offset u_space.xy
+#define u_mouse u_space.zw
+#define u_cursorPresence u_cursor.x
+#define u_cursorStrength u_cursor.z
+float hash21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
+float grainHash(vec2 p){vec3 p3=fract(vec3(p.xyx)*0.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
+float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);vec2 u=f*f*(3.0-2.0*f);return mix(mix(hash21(i),hash21(i+vec2(1.0,0.0)),u.x),mix(hash21(i+vec2(0.0,1.0)),hash21(i+vec2(1.0,1.0)),u.x),u.y);}
+float fbm(vec2 p){float v=0.0;float a=0.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+vec2(17.0,9.2);a*=0.5;}return v;}
+vec3 palette(float x){float n=max(u_colorCount-1.0,1.0);float f=clamp(x,0.0,1.0)*n;vec3 col=u_colors[0];for(int i=0;i<7;i++){if(float(i)<n)col=mix(col,u_colors[i+1],smoothstep(0.0,1.0,clamp(f-float(i),0.0,1.0)));}return col;}
+vec3 shade(vec2 p,float t){float flutes=mix(42.0,7.0,u_paramA);float cell=fract((p.x+1.0)*flutes)-0.5;float prism=sin(cell*3.1415926)*(0.03+u_intensity*0.2);vec2 sp=p+vec2(prism,sin(p.x*flutes+t*0.2)*prism*0.35);float field=fbm(sp*2.2+vec2(t*0.035,-t*0.025)+u_seed);field+=0.24*sin(sp.y*3.0+sp.x*1.3);float highlight=pow(1.0-abs(cell)*2.0,mix(12.0,2.0,u_intensity));float shadow=smoothstep(0.18,0.5,abs(cell));vec3 glass=palette(clamp(field+highlight*0.3,0.0,1.0));return glass*(0.72+highlight*0.42-shadow*0.12);}
+void main(){vec2 uv=gl_FragCoord.xy/u_resolution.xy;vec2 p=(gl_FragCoord.xy-0.5*u_resolution.xy)/min(u_resolution.x,u_resolution.y);
+if(u_cursorPresence>0.001){vec2 cursor=(0.5*u_mouse*u_resolution.xy)/min(u_resolution.x,u_resolution.y);p+=cursor*u_cursorPresence*u_cursorStrength*0.55;}
+p*=u_scale;if(abs(u_rotate)>0.0001){float cr=cos(u_rotate),sr=sin(u_rotate);p=mat2(cr,-sr,sr,cr)*p;}p+=u_offset;p+=u_drift*vec2(sin(u_time*0.31),cos(u_time*0.23));
+p+=u_warp*(vec2(fbm(p*u_detail+u_seed),fbm(p*u_detail+vec2(5.2,1.3)))-0.5);
+vec3 col=shade(p,u_time);col=(col-0.5)*u_contrast+0.5;float luma=dot(col,vec3(0.299,0.587,0.114));col=mix(vec3(luma),col,u_saturation);col+=u_brightness;
+float vd=length(uv-0.5)*1.41421356;col*=1.0-u_vignette*smoothstep(0.35,1.0,vd);col+=(grainHash(gl_FragCoord.xy+vec2(u_seed*17.0,u_seed*31.0))-0.5)*u_grain;gl_FragColor=vec4(clamp(col,0.0,1.0),1.0);}`;
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+const COLORS = ['#030907', '#0A221B', '#16503A', '#4FC255', '#B9F2A8'].map(hex); // nuit verte → ardoise → vert profond → vert toxique → menthe
+while (COLORS.length < 8) COLORS.push(COLORS[COLORS.length - 1]);
+function glass(canvas, o = {}) {
+  const P = Object.assign({ scale: 1.05, intensity: 0.55, paramA: 0.78, warp: 0.16, detail: 1.6, contrast: 0.92, brightness: -0.04, saturation: 1.0, vignette: 0.35, grain: 0.045, seed: 8776, rotate: 0.0, offX: -0.04, offY: 0.16, drift: 0.12, cursor: true, strength: 0.6, timeScale: 0.9, colorCount: 5 }, o); // verre cannelé vertical + vagues douces, comme ASLAB
+  const gl = canvas && canvas.getContext('webgl', { antialias: false });
+  if (!gl) return;
+  const sh = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; };
+  const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VERT)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FRAG)); gl.linkProgram(pr); gl.useProgram(pr);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'a_position'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(pr, n);
+  gl.uniform3fv(U('u_colors'), new Float32Array(COLORS.flat()));
+  gl.uniform4f(U('u_shape'), P.scale, P.intensity, P.paramA, P.warp);
+  gl.uniform4f(U('u_surface'), P.detail, P.contrast, P.brightness, P.saturation);
+  gl.uniform4f(U('u_finish'), 0, P.vignette, 0, P.grain);
+  gl.uniform4f(U('u_transform'), P.seed, P.rotate, P.drift, 0);
+  const uScene = U('u_scene'), uSpace = U('u_space'), uCursor = U('u_cursor');
+  let tx = 0, ty = 0, tp = 0, mx = 0, my = 0, cp = 0, last = null, raf = 0, inView = true;
+  const t0 = performance.now();
+  const fit = () => { const d = Math.min(devicePixelRatio || 1, 2), r = canvas.getBoundingClientRect(); let w = Math.round(r.width * d), h = Math.round(r.height * d); const s = Math.min(1, Math.sqrt(1600000 / Math.max(1, w * h))); w = Math.max(1, Math.round(w * s)); h = Math.max(1, Math.round(h * s)); if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); } };
+  if (P.cursor) addEventListener('pointermove', (e) => { const r = canvas.getBoundingClientRect(); tp = e.clientY >= r.top && e.clientY <= r.bottom ? 1 : 0; tx = ((e.clientX - r.left) / r.width) * 2 - 1; ty = -(((e.clientY - r.top) / r.height) * 2 - 1); }, { passive: true });
+  new IntersectionObserver(([e]) => { inView = e.isIntersecting; if (inView && !raf) raf = requestAnimationFrame(draw); }).observe(canvas);
+  function draw(now) {
+    raf = 0; if (!inView || document.hidden) { last = null; return; }
+    const dt = last === null ? 0 : Math.min((now - last) / 1000, 0.1); last = now; const f = 1 - Math.exp(-6 * dt);
+    mx += (tx - mx) * f; my += (ty - my) * f; cp += (tp - cp) * f; fit();
+    gl.uniform4f(uScene, canvas.width, canvas.height, ((now - t0) / 1000) * P.timeScale, P.colorCount);
+    gl.uniform4f(uSpace, P.offX, P.offY, mx, my); gl.uniform4f(uCursor, P.cursor ? cp : 0, 0, P.strength, 0.4);
+    gl.drawArrays(gl.TRIANGLES, 0, 3); raf = requestAnimationFrame(draw);
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !raf) raf = requestAnimationFrame(draw); });
+  raf = requestAnimationFrame(draw);
+}
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+glass(document.getElementById('glass'), reduce ? { timeScale: 0, cursor: false } : {});
+glass(document.getElementById('glass2'), { cursor: false, seed: 1234, timeScale: reduce ? 0 : 0.7 });
+glass(document.getElementById('glass3'), { cursor: false, seed: 4321, paramA: 0.6, timeScale: reduce ? 0 : 0.6 });
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const coin = (size = 34) => `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true"><use href="#coinx"/></svg>`;
+
+let lenis = null;
+if (!reduce && window.Lenis) { lenis = new Lenis({ lerp: 0.1 }); const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); }; requestAnimationFrame(raf); if (window.ScrollTrigger) lenis.on('scroll', ScrollTrigger.update); }
+const go = (t) => (lenis ? lenis.scrollTo(t, { offset: -20 }) : t.scrollIntoView({ behavior: 'smooth' }));
+$$('a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => { const t = $(a.getAttribute('href')); if (!t) return; e.preventDefault(); go(t); }));
+
+/* champ d'adresse : aperçu honnête tant que l'app n'est pas branchée */
+const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+$$('[data-probe]').forEach((f) => f.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = f.querySelector('input').value.trim(), out = f.parentElement.querySelector('.probe-msg');
+  if (!B58.test(v)) { out.textContent = 'That does not look like a Solana address.'; return; }
+  out.textContent = 'The lab opens at launch. Here is what your report will look like.';
+  setTimeout(() => go($('#report')), 700);
+}));
+$$('[data-connect]').forEach((b) => b.addEventListener('click', () => { $('.hero .probe-msg').textContent = 'Wallet connection opens at launch. Paste any address to preview.'; $('.hero .probe input').focus(); }));
+
+/* la carte « autopsie en direct » (exemple) : les corps arrivent un par un, en boucle */
+const BODIES = [['9xQe…pump', 'Bundled', '−0.82'], ['Hk3P…pump', 'Dev dumped', '−0.41'], ['4ZtW…pump', 'Sniped', '−0.27'], ['Bq8n…pump', 'Rug', '−1.06'], ['Dm2R…pump', 'Starved', '−0.18']];
+const rows = $('#rows'), liveSol = $('#liveSol'), liveN = $('#liveN');
+rows.innerHTML = BODIES.map(([m, c, l]) => `<li class="row">${coin()}<span class="m">${m}</span><span class="l">${l} SOL</span><span class="cause">${c}</span></li>`).join('');
+
+/* les cuves, dessinées en code */
+const TAGS = ['Bundled', 'Dev dumped', 'Rug', 'Sniped'];
+$('#tubes').innerHTML = TAGS.map((t, i) => `
+  <div class="tube">
+    <svg viewBox="0 0 100 220" aria-hidden="true">
+      <defs><clipPath id="tc${i}"><rect x="14" y="26" width="72" height="176" rx="36"/></clipPath></defs>
+      <rect x="8" y="196" width="84" height="18" rx="6" fill="#16302A" stroke="#A8E6A0" stroke-opacity=".35"/>
+      <g clip-path="url(#tc${i})">
+        <rect x="14" y="26" width="72" height="176" fill="rgba(121,236,96,.05)"/>
+        <g class="lvl"><path d="M14 60 Q32 52 50 60 T86 60 V210 H14z" fill="url(#liquid)" opacity=".85"/></g>
+        <circle class="bub" cx="34" cy="190" r="3" fill="none" stroke="#DDF9D1"/><circle class="bub" cx="62" cy="196" r="2" fill="none" stroke="#DDF9D1"/><circle class="bub" cx="48" cy="200" r="2.5" fill="none" stroke="#DDF9D1"/>
+        <use class="coinx" href="#coinx" x="22" y="100" width="56" height="56"/>
+      </g>
+      <rect x="14" y="26" width="72" height="176" rx="36" fill="url(#glassG)" stroke="#A8E6A0" stroke-opacity=".55" stroke-width="2"/>
+      <rect x="10" y="14" width="80" height="18" rx="6" fill="#16302A" stroke="#A8E6A0" stroke-opacity=".35"/>
+    </svg>
+    <span class="ttag">${t}</span>
+  </div>`).join('');
+
+/* le grand flacon : pièces empilées */
+const spots = [];
+for (let r = 0; r < 5; r++) for (let c = 0; c < 6 - (r % 2); c++) spots.push([86 + c * 30 + (r % 2) * 15, 300 - r * 20]);
+$('#pile').innerHTML = spots.map(([x, y]) => `<g class="pc" opacity="0"><circle cx="${x}" cy="${y}" r="14" fill="url(#goldCoin)" stroke="#7a5a08" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#7a5a08" stroke-opacity=".5"/></g>`).join('');
+
+if (!window.gsap || reduce) {
+  $$('.rv,.row').forEach((el) => { el.style.opacity = 1; el.style.transform = 'none'; });
+  $$('.bars .t i').forEach((i) => (i.style.width = (i.dataset.w / 76) * 100 + '%'));
+  liveSol.textContent = '0.010 SOL'; liveN.textContent = '5 bodies';
+  return;
+}
+gsap.registerPlugin(ScrollTrigger);
+
+/* boucle de la carte en direct */
+(function liveLoop() {
+  const st = { v: 0, n: 0 };
+  const paint = () => { liveSol.textContent = st.v.toFixed(3) + ' SOL'; liveN.textContent = Math.round(st.n) + ' bodies'; };
+  const tl = gsap.timeline({ repeat: -1, repeatDelay: 1, delay: 1.1, onRepeat: () => { st.v = 0; st.n = 0; paint(); } });
+  tl.set('.row', { opacity: 0, y: 10 }, 0);
+  $$('.row').forEach((r, i) => {
+    tl.to(r, { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out' }, 0.2 + i * 0.75)
+      .fromTo(r.querySelector('.cause'), { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(3)' }, 0.55 + i * 0.75)
+      .to(st, { v: (i + 1) * 0.00204, n: i + 1, duration: 0.4, onUpdate: paint }, 0.55 + i * 0.75);
+  });
+  tl.to({}, { duration: 2.4 }).to('.row', { opacity: 0, y: -8, duration: 0.4, stagger: 0.05 });
+})();
+
+/* entrée du hero */
+gsap.from('.hero h1 .w > span', { yPercent: 115, duration: 1.1, ease: 'power4.out', stagger: 0.06, delay: 0.2, onComplete: () => document.querySelectorAll('.hero h1 .w').forEach((w) => (w.style.overflow = 'visible')) }); // une fois entré, le halo du mot « killed » n'est plus coupé
+gsap.from('.hero .eyebrow, .hero .lead, .hero .probe, .hero .probe-sub', { y: 24, opacity: 0, duration: 0.9, ease: 'power3.out', stagger: 0.08, delay: 0.6 });
+gsap.from('.live', { y: 50, opacity: 0, rotate: 2, duration: 1.2, ease: 'power3.out', delay: 0.5 });
+gsap.from('header', { y: -24, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.1 });
+
+$$('.rv').forEach((el) => gsap.to(el, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 86%' } }));
+
+/* comment ça marche : épinglé, piloté par la molette `[F-044]` `[F-047]` */
+const steps = $$('.step'), howSol = $('#howSol');
+if (matchMedia('(min-width:1021px)').matches) {
+  const tl = gsap.timeline({ scrollTrigger: { trigger: '.how', start: 'top top', end: 'bottom bottom', scrub: 0.6,
+    onUpdate: (s) => { const k = s.progress; steps.forEach((el, i) => el.classList.toggle('on', i === (k < 0.33 ? 0 : k < 0.66 ? 1 : 2))); } } });
+  tl.from('.tube', { y: 80, opacity: 0, stagger: 0.12, duration: 1 }, 0)
+    .to('.ttag', { opacity: 1, y: 0, scale: 1, stagger: 0.18, duration: 0.5, ease: 'back.out(3)' }, 1.3)
+    .to('.tube .lvl', { y: 150, stagger: 0.12, duration: 1, ease: 'power1.in' }, 2.6)
+    .to('.tube .coinx', { opacity: 0.25, stagger: 0.12, duration: 0.6 }, 2.6)
+    .to('#miniLevel', { attr: { y: 26 }, duration: 1.4 }, 2.7)
+    .to({ v: 0 }, { v: 0.43, duration: 1.4, onUpdate() { howSol.textContent = this.targets()[0].v.toFixed(3); } }, 2.7);
+  const bench = $('#bench'), flask = $('.machine svg');
+  $$('.tube').forEach((t, i) => {
+    const c = document.createElement('span'); c.className = 'fly'; bench.appendChild(c);
+    const at = () => { const b = bench.getBoundingClientRect(), r = t.getBoundingClientRect(), f = flask.getBoundingClientRect(); return { x0: r.left - b.left + r.width / 2, y0: r.top - b.top + r.height * 0.6, x1: f.left - b.left + f.width / 2, y1: f.top - b.top + f.height * 0.6 }; };
+    tl.fromTo(c, { opacity: 0, x: () => at().x0, y: () => at().y0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.25 }, 2.8 + i * 0.14)
+      .to(c, { x: () => at().x1, y: () => at().y1, scale: 0.5, duration: 0.6, ease: 'power2.in' }, 3.05 + i * 0.14)
+      .to(c, { opacity: 0, duration: 0.12 }, 3.62 + i * 0.14);
+  });
+} else steps.forEach((s) => s.classList.add('on'));
+
+/* le rapport */
+$$('[data-count]').forEach((el) => {
+  const n = parseFloat(el.dataset.count), d = +(el.dataset.dec || 0), u = el.dataset.unit || '';
+  ScrollTrigger.create({ trigger: el, start: 'top 86%', once: true, onEnter: () => gsap.to({ v: 0 }, { v: n, duration: 1.6, ease: 'power2.out', onUpdate() { el.textContent = this.targets()[0].v.toFixed(d) + u; } }) });
+});
+ScrollTrigger.create({ trigger: '.bars', start: 'top 86%', once: true, onEnter: () => $$('.bars .t i').forEach((i, k) => setTimeout(() => (i.style.width = (i.dataset.w / 76) * 100 + '%'), k * 110)) });
+
+/* Bury : le flacon se remplit de liquide et de pièces à la molette */
+const pcs = $$('.pc'), bigSol = $('#bigSol');
+const lvl = { y: 330 };
+gsap.timeline({ scrollTrigger: { trigger: '#bury', start: 'top 75%', end: 'center 35%', scrub: 0.8,
+  onUpdate: (s) => { const k = s.progress; pcs.forEach((p, i) => p.setAttribute('opacity', k > (i + 1) / (pcs.length + 4) ? 1 : 0)); bigSol.textContent = (0.43 * k).toFixed(2); } } })
+  .to(lvl, { y: 190, ease: 'none', onUpdate: () => $('#bigLevel').setAttribute('transform', `translate(0,${lvl.y})`) }, 0);
+gsap.to('#bigLevel path', { attr: { d: 'M0 14 Q40 28 80 14 T160 14 T240 14 T320 14 V340 H0z' }, duration: 1.6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+node_modules
+.next
+.env*.local
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+# copiés depuis ../site à chaque build
+public/index.html
+public/img
+
+.vercel

@@ -652,10 +652,12 @@ $$('[data-probe]').forEach((f) => f.addEventListener('submit', (e) => {
   e.preventDefault();
   const v = f.querySelector('input').value.trim(), out = f.parentElement.querySelector('.probe-msg');
   if (!B58.test(v)) { out.textContent = 'That does not look like a Solana address.'; return; }
+  if (window.autopsy) { window.autopsy.run(v, out); return; }
   out.textContent = 'The lab opens at launch. Here is what your report will look like.';
   setTimeout(() => go($('#report')), 700);
 }));
-$$('[data-connect]').forEach((b) => b.addEventListener('click', () => { $('.hero .probe-msg').textContent = 'Wallet connection opens at launch. Paste any address to preview.'; $('.hero .probe input').focus(); }));
+window.__lab = { go, live: false };
+$$('[data-connect]').forEach((b) => b.addEventListener('click', () => { if (window.autopsy) { window.autopsy.connect(); return; } $('.hero .probe-msg').textContent = 'Wallet connection opens at launch. Paste any address to preview.'; $('.hero .probe input').focus(); }));
 
 /* les cuves, dessinées en code */
 const TAGS = ['Bundled', 'Dev dumped', 'Rug', 'Sniped'];
@@ -733,6 +735,7 @@ if (matchMedia('(min-width:1021px)').matches) {
   const ring = (el) => { const L = el.getTotalLength(); el.style.strokeDasharray = L; el.style.strokeDashoffset = L; return L; };
   ring($('#countRing')); ring($('#woundRing'));
   const tl = gsap.timeline({ scrollTrigger: { trigger: '#clip', start: 'top 72%', once: true } });
+  window.__lab.reportTl = tl;
   const narrowScreen = matchMedia('(max-width:1020px)').matches; // sur téléphone : rien ne part sur le côté (sinon la page s'élargit)
   tl.from('#clip', { y: 80, rotate: narrowScreen ? 0 : -6, opacity: 0, duration: 0.9, ease: 'power3.out' })
     .fromTo('.paper .tw-line', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.45, ease: 'steps(18)', stagger: 0.16 }, '-=0.2')
@@ -763,8 +766,8 @@ $$('.rack svg').forEach((r, i) => { const l = r.querySelector('.rlvl'); const y 
 const pcs = $$('.pc'), bigSol = $('#bigSol');
 const lvl = { y: 330 };
 gsap.timeline({ scrollTrigger: { trigger: '#bury', start: 'top 75%', end: 'center 35%', scrub: 0.8,
-  onUpdate: (s) => { const k = s.progress; pcs.forEach((p, i) => p.setAttribute('opacity', k > (i + 1) / (pcs.length + 4) ? 1 : 0)); bigSol.textContent = (0.43 * k).toFixed(2); } } })
-  .to(lvl, { y: 190, ease: 'none', onUpdate: () => $('#bigLevel').setAttribute('transform', `translate(0,${lvl.y})`) }, 0);
+  onUpdate: (s) => { if (window.__lab.live) return; const k = s.progress; pcs.forEach((p, i) => p.setAttribute('opacity', k > (i + 1) / (pcs.length + 4) ? 1 : 0)); bigSol.textContent = (0.43 * k).toFixed(2); } } })
+  .to(lvl, { y: 190, ease: 'none', onUpdate: () => !window.__lab.live && $('#bigLevel').setAttribute('transform', `translate(0,${lvl.y})`) }, 0);
 gsap.to('#bigLevel path', { attr: { d: 'M0 14 Q40 28 80 14 T160 14 T240 14 T320 14 V340 H0z' }, duration: 1.6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
 })();
 </script>
